@@ -117,12 +117,6 @@ body {
   transition: background-color 0.3s ease;
 }
 
-/* Moved from inline styles */
-.logo {
-  max-width: 120px;
-  height: auto;
-  margin-bottom: var(--space-md);
-}
 
 .hidden-nav {
   display: none !important;
