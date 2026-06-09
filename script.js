@@ -83,6 +83,18 @@ const questions = [
     explanation: "JavaScript adds interactivity and behavior to web pages."
   }
 ];
+
+// Randomize questions array
+function shuffleQuestions() {
+  const shuffled = [...questions];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+let randomizedQuestions = [];
 let currentQuestionIndex = 0;
 let score = 0;
 let userAnswers = Array(questions.length).fill(null);
@@ -192,14 +204,13 @@ function announceFeedback(message) {
     announceFeedback._clearTimeoutId = undefined;
   }, 1000);
 }
-  }, 1000);
-}
 
 // =========================
 // Progress Bar Functions
 // =========================
 function updateProgressBar() {
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+  const totalQuestions = randomizedQuestions.length > 0 ? randomizedQuestions.length : questions.length;
+  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
   const progressBar = document.getElementById("progress-bar");
   if (progressBar) {
     progressBar.style.width = progress + "%";
@@ -207,19 +218,19 @@ function updateProgressBar() {
   
   // Update progress text (legacy)
   if (progressText) {
-    progressText.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+    progressText.textContent = `Question ${currentQuestionIndex + 1} of ${totalQuestions}`;
   }
   
   // Update new progress header
   if (progressContext) {
-    progressContext.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+    progressContext.textContent = `Question ${currentQuestionIndex + 1} of ${totalQuestions}`;
   }
   if (progressPercentage) {
     progressPercentage.textContent = Math.round(progress) + '%';
   }
   
   // Announce progress for screen readers
-  const announcement = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+  const announcement = `Question ${currentQuestionIndex + 1} of ${totalQuestions}`;
   announceFeedback(announcement);
 }
 
@@ -240,15 +251,16 @@ function showSection(section) {
 }
 
 function startQuiz() {
+  randomizedQuestions = shuffleQuestions();
   currentQuestionIndex = 0;
   score = 0;
-  userAnswers = Array(questions.length).fill(null);
+  userAnswers = Array(randomizedQuestions.length).fill(null);
   showSection(quizSection);
   displayQuestion();
 }
 
 function displayQuestion() {
-  const current = questions[currentQuestionIndex];
+  const current = randomizedQuestions[currentQuestionIndex];
   questionText.textContent = current.question;
   
   // Update legend for screen readers
@@ -299,8 +311,8 @@ function displayQuestion() {
 
   // Update navigation buttons
   backBtn.classList.toggle("hidden", currentQuestionIndex === 0);
-  nextBtn.classList.toggle("hidden", currentQuestionIndex >= questions.length - 1);
-  submitBtn.classList.toggle("hidden", currentQuestionIndex < questions.length - 1);
+  nextBtn.classList.toggle("hidden", currentQuestionIndex >= randomizedQuestions.length - 1);
+  submitBtn.classList.toggle("hidden", currentQuestionIndex < randomizedQuestions.length - 1);
 
   updateProgressBar();
   
@@ -326,21 +338,49 @@ function selectOption(index) {
 }
 
 function showResults() {
-  score = userAnswers.reduce((acc, answer, i) => acc + (answer === questions[i].answer ? 1 : 0), 0);
-  scoreText.textContent = `You scored ${score} out of ${questions.length}.`;
+  score = 0;
   explanationsList.innerHTML = "";
+randomizedQuestions.forEach((q, i) => {
+    const selected = userAnswers[i] != null ? Number(userAnswers[i]) : null;
+    const correct = Number(q.answer);
+    const isCorrect = selected === correct;
+    if (isCorrect) score++;
 
-  questions.forEach((q, i) => {
     const li = document.createElement("li");
-    li.innerHTML = `
-      <p><strong>Q${i + 1}:</strong> ${q.question}</p>
-      <p><strong>Your answer:</strong> ${q.options[userAnswers[i]] ?? "No answer selected"}</p>
-      <p><strong>Correct answer:</strong> ${q.options[q.answer]}</p>
-      <p>${q.explanation}</p>
-    `;
+
+    const pQ = document.createElement("p");
+    const qStrong = document.createElement("strong");
+    qStrong.textContent = `Q${i + 1}: `;
+    pQ.appendChild(qStrong);
+    pQ.appendChild(document.createTextNode(q.question));
+    li.appendChild(pQ);
+
+    const pYour = document.createElement("p");
+    const yourStrong = document.createElement("strong");
+    yourStrong.textContent = "Your answer: ";
+    pYour.appendChild(yourStrong);
+    pYour.appendChild(
+      document.createTextNode(selected != null ? q.options[selected] : "No answer selected")
+    );
+    li.appendChild(pYour);
+
+    const pCorrect = document.createElement("p");
+    const correctStrong = document.createElement("strong");
+    correctStrong.textContent = "Correct answer: ";
+    pCorrect.appendChild(correctStrong);
+    pCorrect.appendChild(document.createTextNode(q.options[correct]));
+    li.appendChild(pCorrect);
+
+    if (q.explanation) {
+      const pExp = document.createElement("p");
+      pExp.textContent = q.explanation;
+      li.appendChild(pExp);
+    }
+
     explanationsList.appendChild(li);
   });
 
+  scoreText.textContent = `You scored ${score} out of ${randomizedQuestions.length}.`;
   showSection(resultSection);
 }
 
