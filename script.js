@@ -182,9 +182,16 @@ function focusFirstOption() {
 
 function announceFeedback(message) {
   quizFeedback.textContent = message;
-  // Clear after a delay to reset for next announcement
-  setTimeout(() => {
+
+  if (announceFeedback._clearTimeoutId) {
+    clearTimeout(announceFeedback._clearTimeoutId);
+  }
+
+  announceFeedback._clearTimeoutId = setTimeout(() => {
     quizFeedback.textContent = '';
+    announceFeedback._clearTimeoutId = undefined;
+  }, 1000);
+}
   }, 1000);
 }
 
