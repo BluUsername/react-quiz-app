@@ -122,6 +122,7 @@ const howtoQuizBtn = document.getElementById("howto-quiz-btn");
 const startBtn = document.getElementById("start-btn");
 
 const questionText = document.getElementById("question-text");
+const optionsFieldset = document.getElementById("options-fieldset");
 const optionsContainer = document.getElementById("options-container");
 const questionLegend = document.getElementById("question-legend");
 const quizFeedback = document.getElementById("quiz-feedback");
@@ -135,6 +136,7 @@ const explanationsList = document.getElementById("explanations-list");
 
 // Legacy elements (for backward compatibility)
 const progressText = document.getElementById("progress-text");
+const optionsList = document.getElementById("options-list");
 
 // =========================
 // Theme Management
@@ -192,9 +194,14 @@ function focusFirstOption() {
 
 function announceFeedback(message) {
   quizFeedback.textContent = message;
-  // Clear after a delay to reset for next announcement
-  setTimeout(() => {
+
+  if (announceFeedback._clearTimeoutId) {
+    clearTimeout(announceFeedback._clearTimeoutId);
+  }
+
+  announceFeedback._clearTimeoutId = setTimeout(() => {
     quizFeedback.textContent = '';
+    announceFeedback._clearTimeoutId = undefined;
   }, 1000);
 }
 
@@ -408,11 +415,15 @@ retryBtn.addEventListener("click", () => showSection(heroSection));
 
 // Keyboard shortcuts
 document.addEventListener("keydown", (e) => {
+  // Only handle shortcuts when focus is inside the quiz (or on the document itself)
+  const target = e.target;
+  const isInQuiz = quizSection.contains(target) || target === document.body || target === document.documentElement;
+
   // Only handle shortcuts when quiz is active and not typing in text inputs
-  if (!quizSection.classList.contains("hidden") && 
-      !(e.target.tagName === "INPUT" && e.target.type === "text") &&
-      e.target.tagName !== "TEXTAREA") {
-    
+  if (!quizSection.classList.contains("hidden") &&
+      isInQuiz &&
+      !(target.tagName === "INPUT" && target.type === "text") &&
+      target.tagName !== "TEXTAREA") {
     // Handle number keys 1-4 (and potentially more)
     const num = parseInt(e.key);
     if (num >= 1 && num <= 4) {
