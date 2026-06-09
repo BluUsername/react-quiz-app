@@ -375,11 +375,15 @@ retryBtn.addEventListener("click", () => showSection(heroSection));
 
 // Keyboard shortcuts
 document.addEventListener("keydown", (e) => {
+  // Only handle shortcuts when focus is inside the quiz (or on the document itself)
+  const target = e.target;
+  const isInQuiz = quizSection.contains(target) || target === document.body || target === document.documentElement;
+
   // Only handle shortcuts when quiz is active and not typing in text inputs
-  if (!quizSection.classList.contains("hidden") && 
-      !(e.target.tagName === "INPUT" && e.target.type === "text") &&
-      e.target.tagName !== "TEXTAREA") {
-    
+  if (!quizSection.classList.contains("hidden") &&
+      isInQuiz &&
+      !(target.tagName === "INPUT" && target.type === "text") &&
+      target.tagName !== "TEXTAREA") {
     // Handle number keys 1-4 (and potentially more)
     const num = parseInt(e.key);
     if (num >= 1 && num <= 4) {
